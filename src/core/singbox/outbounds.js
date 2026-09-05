@@ -1,56 +1,47 @@
-import { fetchWithFallback } from '../../utils/index.js';
+import { processSubscription } from '../../utils/index.js';
+
+/**
+ * 获取并处理 outbound 节点数据
+ *
+ * 根据配置选择不同的数据获取方式：
+ * - e.sub 为 true 时，通过订阅地址获取节点
+ * - e.sub 为 false 时，通过节点转换模块解析节点
+ *
+ * 获取完成后会执行 outbound 处理逻辑，并返回标准化响应数据。
+ *
+ * @param {Object} e - 请求配置参数
+ * @param {boolean} e.sub - 是否使用订阅模式
+ * @param {string|string[]} e.urls - 节点订阅地址或节点数据地址
+ * @param {string} [e.target] - 节点转换目标格式
+ *
+ * @returns {Promise<Object>} outbound 数据结果
+ * @returns {number} returns.status - 请求状态码
+ * @returns {Object} returns.headers - 响应头信息
+ * @returns {Object} returns.data - 处理后的配置数据
+ *
+ * @throws {Error} 当未找到有效节点时抛出异常
+ */
 export default async function getOutbounds_Data(e) {
-    const isSingle = e.urls.length === 1;
-    const results = await Promise.all(e.urls.map((url, index) => fetchWithFallback(url, e).then((res) => ({ res, index }))));
-
-    const responseList = [];
-    const outboundsList = [];
-
-    for (const { res, index } of results) {
-        if (Array.isArray(res?.data?.outbounds) && res?.data?.outbounds?.length > 0) {
-            processOutbounds(res.data.outbounds, e, isSingle ? 0 : index + 1);
-            responseList.push({ status: res.status, headers: res.headers });
-            outboundsList.push(res.data.outbounds);
-        }
-    }
-
-    if (responseList.length === 0) {
+    const results = await processSubscription(e.urls, e.userAgent, e.sub, e.target);
+    if (results.data?.data?.outbounds?.length === 0) {
         throw new Error('未从任何 URL 找到有效的节点');
     }
-    const flatoutbounds = outboundsList.flat();
-    if (isSingle) {
-        const response = responseList[0];
-        return {
-            status: response.status,
-            headers: response.headers,
-            data: { outbounds: flatoutbounds },
-        };
-    }
-
-    const randomResponse = responseList[Math.floor(Math.random() * responseList.length)];
-
+    processOutbounds(results.data.data.outbounds, e, results.data.names);
     return {
-        status: randomResponse.status,
-        headers: randomResponse.headers,
-        data: { outbounds: flatoutbounds },
+        status: results.status,
+        headers: results.headers,
+        data: results.data.data,
     };
 }
 
 // 处理 outbounds 数组
-function processOutbounds(outbounds, options, index) {
-    const isV113 = /1\.(1[3-9]|[3-9]\d)/i.test(options.userAgent);
+function processOutbounds(outbounds, options, names) {
     outbounds.forEach((outbound) => {
-        if (index > 0) {
-            outbound.tag = `${outbound.tag} [${index}]`;
-            if (options.relay) {
-                if (index === 1) {
-                    options.proxyname ??= [];
-                    options.proxyname.push(outbound.tag);
-                } else {
-                    outbound.detour = '🔗链式前置';
-                    options.dialerproxy ??= [];
-                    options.dialerproxy.push(outbound.tag);
-                }
+        if (options.relay && names[0].includes(outbound.tag)) {
+            options.proxyname = names[0];
+            options.dialerproxy = names.slice(1).flat();
+            if (options.proxyname && options.dialerproxy) {
+                outbound.detour = '🔗链式前置';
             }
         }
         if (options.udp_fragment) {
@@ -61,7 +52,7 @@ function processOutbounds(outbounds, options, index) {
                 ...outbound.tls,
                 ech: {
                     enabled: true,
-                    ...(isV113 && { query_server_name: 'cloudflare-ech.com' }),
+                    query_server_name: 'cloudflare-ech.com',
                 },
             };
         }

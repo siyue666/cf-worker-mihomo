@@ -175,3 +175,7 @@ dist
 
 *.log
 .env*.local
+
+root.json
+sub-store.json
+.env*

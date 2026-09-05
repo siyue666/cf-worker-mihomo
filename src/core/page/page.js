@@ -1,7 +1,7 @@
 import configs from './config.js';
 
 export async function getFakePage(e) {
-    let configData = JSON.parse(configs());
+    let configData = JSON.parse(configs(e.tplmh, e.tplsb));
     if (e.templateBaseUrl) {
         try {
             const res = await fetch(`${e.templateBaseUrl}/templates.json`);
@@ -548,7 +548,7 @@ export async function getFakePage(e) {
         </div>
     </div>
 
-    <a href="https://github.com/Kwisma/cf-worker-mihomo" target="_blank" class="github-corner" aria-label="GitHub">
+    <a href="https://github.com/Kwisma/cf-SubCloud" target="_blank" class="github-corner" aria-label="GitHub">
         <svg width="48" height="48" viewBox="0 0 250 250" style="fill:#6366f1; color:white;">
             <path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path>
             <path
@@ -616,8 +616,8 @@ export async function getFakePage(e) {
                     protocolParams[protoName] = select.value;
                 }
             });
-            if (links.length === 0 && !templateVal) {
-                alert('请至少填写一个订阅链接或选择一个模板');
+            if (links.length === 0) {
+                alert('请至少填写一个订阅链接');
                 return;
             }
 

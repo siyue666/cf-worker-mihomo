@@ -1,4 +1,4 @@
-import { splitUrlsAndProxies, backimg, subapi, beiantext, beiandizi } from './index.js';
+import { splitUrlsAndProxies, backimg, beiantext, beiandizi, isUrl } from './index.js';
 export function buildConfig(request, env, isNode = false) {
     const url = isNode ? new URL(request.url, `http://${request.headers.host}`) : new URL(request.url);
 
@@ -18,7 +18,6 @@ export function buildConfig(request, env, isNode = false) {
         }
         return env?.[key] ?? fallback;
     };
-
     const data = {};
     data.url = url;
     data.userAgent = getHeader('User-Agent');
@@ -27,7 +26,6 @@ export function buildConfig(request, env, isNode = false) {
     if (urlParam && urlParam.trim()) {
         data.urls = splitUrlsAndProxies(urlParam.split(',').map((u) => u.trim()));
     }
-    data.rule = getParam('template')
     const target = getParam('target');
     if (target) data.target = target;
     const log = getParam('log');
@@ -39,26 +37,49 @@ export function buildConfig(request, env, isNode = false) {
     if (getParamBool('ep')) data.exclude_package = true;
     if (getParamBool('ea')) data.exclude_address = true;
     if (getParamBool('tailscale')) data.tailscale = true;
+    if (getParamBool('bridge')) data.bridge = true;
     if (getParamBool('adgdns')) data.adgdns = true;
     if (getParamBool('tun')) data.tun = true;
     if (getParamBool('ech')) data.ech = true;
     if (getParamBool('relay')) data.relay = true;
-    if (getParamBool('fallback')) data.fallback = true;
+    if (getParamBool('heruser')) data.heruser = true;
+    if (getParamBool('nodelist')) data.nodelist = true;
+    if (getParamBool('ipv6')) data.ipv6 = true;
 
     data.IMG = getEnv('IMG', backimg);
-    data.sub = getEnv('SUB', subapi);
+    data.sub = getEnv('SUB', null);
     data.beian = getEnv('BEIAN', beiantext);
     data.beianurl = getEnv('BEIANURL', beiandizi);
-    const getEnvBool = (key) => {
-        const value = getEnv(key);
+    data.checkUA = getEnv('CHECKUA', true);
+    data.tplmh = getEnv('TPLMH', null);
+    data.tplmh = data.tplmh
+        ? data.tplmh
+              .replace(/\\n/g, '\n')
+              .split('\n')
+              .map((line) => line.trim())
+              .filter(Boolean)
+        : null;
+    data.tplsb = getEnv('TPLSB', null);
+    data.tplsb = data.tplsb
+        ? data.tplsb
+              .replace(/\\n/g, '\n')
+              .split('\n')
+              .map((line) => line.trim())
+              .filter(Boolean)
+        : null;
 
-        if (value === undefined) {
-            return true;
+    const templateBaseUrl = getEnv('TEMPLATE_URL', '');
+    if (templateBaseUrl) data.templateBaseUrl = templateBaseUrl;
+    const template = getParam('template');
+    if (template && !isUrl(template)) {
+        if (templateBaseUrl) {
+            data.rule = `${templateBaseUrl}/${data.target}${template}`;
+        } else {
+            data.rule = `${url.origin}${isNode ? '/template' : ''}/${data.target}${template}`;
         }
-
-        return value;
+    } else {
+        data.rule = template;
     }
-    data.checkUA = getEnvBool('CHECKUA')
 
     return data;
 }

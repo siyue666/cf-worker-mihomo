@@ -1,4 +1,4 @@
-const Config112 = {
+const Config = {
     log: {
         disabled: false,
         level: 'info',
@@ -40,7 +40,7 @@ const Config112 = {
         rules: [
             {
                 ip_accept_any: true,
-                server: 'PROXY-DNS',
+                server: 'hosts',
             },
             {
                 clash_mode: 'direct',
@@ -147,14 +147,14 @@ const Config112 = {
             {
                 tag: 'private_domain',
                 type: 'remote',
-                url: 'https://jsd.onmicrosoft.cn/gh/MetaCubeX/meta-rules-dat@sing/geo/geosite/private.srs',
+                url: 'https://cdn.jsdmirror.com/gh/MetaCubeX/meta-rules-dat@sing/geo/geosite/private.srs',
                 format: 'binary',
                 download_detour: '🎯 全球直连',
             },
             {
                 tag: 'cn_domain',
                 type: 'remote',
-                url: 'https://jsd.onmicrosoft.cn/gh/MetaCubeX/meta-rules-dat@sing/geo/geosite/cn.srs',
+                url: 'https://cdn.jsdmirror.com/gh/MetaCubeX/meta-rules-dat@sing/geo/geosite/cn.srs',
                 format: 'binary',
                 download_detour: '🎯 全球直连',
             },
@@ -182,4 +182,5 @@ const Config112 = {
         },
     },
 };
-export default Object.freeze(Config112);
+const ConfigLatest = Object.freeze(Config);
+export { ConfigLatest };

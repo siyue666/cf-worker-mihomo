@@ -1,13 +1,16 @@
 {
   "version": 2,
+  "devCommand": "pnpm dev",
+  "buildCommand": "pnpm build",
+  "outputDirectory": "dist",
   "builds": [
+    {
+      "src": "src/server.js",
+      "use": "@vercel/node"
+    },
     {
       "src": "template/**",
       "use": "@vercel/static"
-    },
-    {
-      "src": "src/vercel.js",
-      "use": "@vercel/node"
     }
   ],
   "routes": [
@@ -16,11 +19,8 @@
       "dest": "/template/$1"
     },
     {
-      "handle": "filesystem"
-    },
-    {
       "src": "/(.*)",
-      "dest": "src/vercel.js"
+      "dest": "/src/server.js"
     }
   ]
 }

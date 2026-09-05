@@ -1,3 +1,9 @@
+/*.yaml
+template/**/*.yaml
+template/**/*.json
+test/**/*.yaml
 dist/
-template/*.yaml
-script/*.yaml
+src/core/Sub-Store/
+src/server.js
+*.json
+.*

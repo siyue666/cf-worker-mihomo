@@ -1,4 +1,4 @@
-const Config114 = {
+const Config = {
     log: {
         disabled: false,
         level: 'info',
@@ -39,6 +39,10 @@ const Config114 = {
         ],
         rules: [
             {
+                preferred_by: ['hosts'],
+                server: 'hosts',
+            },
+            {
                 clash_mode: 'direct',
                 server: 'DIRECT-DNS',
             },
@@ -46,28 +50,21 @@ const Config114 = {
                 clash_mode: 'global',
                 server: 'PROXY-DNS',
             },
-            // evaluate 解析并储存ip > 如果等于 cnip 或 cn域名 或 私有域名 用 DIRECT-DNS 再次解析并覆盖结果 > 成功则拦截,失败则继续往下匹配 fallback
+            {
+                rule_set: ['cn_domain', 'private_domain'],
+                server: 'DIRECT-DNS',
+            },
             {
                 action: 'evaluate',
                 server: 'PROXY-DNS',
             },
             {
-                type: 'logical',
-                mode: 'or',
-                rules: [
-                    {
-                        rule_set: ['cn_ip'],
-                        match_response: true,
-                    },
-                    {
-                        rule_set: ['cn_domain', 'private_domain'],
-                    },
-                ],
+                match_response: true,
+                rule_set: ['cn_ip'],
                 server: 'DIRECT-DNS',
             },
             {
                 match_response: true,
-                response_rcode: 'NOERROR',
                 ip_accept_any: true,
                 action: 'respond',
             },
@@ -163,27 +160,43 @@ const Config114 = {
             {
                 tag: 'cn_ip',
                 type: 'remote',
-                url: 'https://jsd.onmicrosoft.cn/gh/MetaCubeX/meta-rules-dat@sing/geo/geoip/cn.srs',
+                url: 'https://cdn.jsdmirror.com/gh/MetaCubeX/meta-rules-dat@sing/geo/geoip/cn.srs',
                 format: 'binary',
                 download_detour: '🎯 全球直连',
             },
             {
                 tag: 'private_domain',
                 type: 'remote',
-                url: 'https://jsd.onmicrosoft.cn/gh/MetaCubeX/meta-rules-dat@sing/geo/geosite/private.srs',
+                url: 'https://cdn.jsdmirror.com/gh/MetaCubeX/meta-rules-dat@sing/geo/geosite/private.srs',
                 format: 'binary',
                 download_detour: '🎯 全球直连',
             },
             {
                 tag: 'cn_domain',
                 type: 'remote',
-                url: 'https://jsd.onmicrosoft.cn/gh/MetaCubeX/meta-rules-dat@sing/geo/geosite/cn.srs',
+                url: 'https://cdn.jsdmirror.com/gh/MetaCubeX/meta-rules-dat@sing/geo/geosite/cn.srs',
                 format: 'binary',
                 download_detour: '🎯 全球直连',
             },
         ],
     },
-    services: [],
+    services: [
+        {
+            type: 'api',
+            listen: '::',
+            listen_port: 9091,
+            secret: '',
+            access_control_allow_origin: ['*'],
+            access_control_allow_private_network: true,
+            dashboard: {
+                enabled: true,
+                path: 'dashboard',
+                download_url: 'https://ghfast.top/github.com/SagerNet/sing-box-dashboard/archive/refs/heads/gh-pages.zip',
+                http_client: 'DIRECT-clients',
+                update_interval: '1d',
+            },
+        },
+    ],
     experimental: {
         clash_api: {
             external_controller: '0.0.0.0:9090',
@@ -205,4 +218,5 @@ const Config114 = {
         },
     },
 };
-export default Object.freeze(Config114);
+const ConfigPre = Object.freeze(Config);
+export { ConfigPre };
